@@ -1,0 +1,12 @@
+This is a set of tools that I am creating as part of Makefield.org
+
+Author: Mike Festa
+
+Currently, there is just one file: tools.py, which has some helper functions for blender
+
+INSTALL:
+Clone into {blender_dir}/scripts/models/makefield
+
+USE:
+In Blender (script or console)
+from makefield import tools
