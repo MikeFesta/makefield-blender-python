@@ -5,7 +5,8 @@ Author: Mike Festa
 Currently, there is just one file: tools.py, which has some helper functions for blender
 
 INSTALL:
-Clone into {blender_dir}/scripts/models/makefield
+Clone into {blender_dir}/scripts/models/
+mv makefield-blender-python makefield
 
 USE:
 In Blender (script or console)

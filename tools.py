@@ -236,39 +236,41 @@ def quit_blender():
 # - Need to have cyles render selected
 # - Need to be in object mode
 # - Could not save image to destination (mac and new/unsaved file)
+# - Image is sometimes black
 
 def test():
   '''Shorthand for testing'''
-  render_360_images_for_all_cameras()
+  #save_dir = os.path.dirname(bpy.data.filepath)
+  save_dir = "E://Makefield//unity//House//Assets//probes"
+  render_360_images_for_all_cameras(save_dir)
 
-def render_360_images_for_all_cameras():
+def render_360_images_for_all_cameras(save_dir):
     cameras = []
     for o in bpy.data.objects:
         if (o.type == 'CAMERA'):
             cameras.append(o)
-    render_360_images_for_cameras(cameras)
+    render_360_images_for_cameras(cameras, save_dir)
 
-def render_360_images_for_cameras(cameras):
-    # Get filepath and directory info for saving images and fbx
-    directory = os.path.dirname(bpy.data.filepath)
-
+def render_360_images_for_cameras(cameras, save_dir):
     # Put the cameras into a group for fbx export and cleanup later
     group = bpy.data.groups.new(name='360_cameras')
 
     for cam in cameras:
-        render_360_for_camera(cam, group) # TODO: add a size parameter instead of hard coding 4k
+        render_360_for_camera(cam, group, save_dir) # TODO: add a size parameter instead of hard coding 4k
 
     # Export all objects in the group 360_cameras as an fbx
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.object.select_grouped(type='GROUP') #same group as the last active object
-    bpy.ops.export_scene.fbx(filepath=directory+'360_cameras.fbx', use_selection=True)
+    #TODO: Add an empty at the origin - replace the cubes with empties
+    bpy.ops.export_scene.fbx(filepath=save_dir+'//360_probes.fbx', use_selection=True)
 
     # Delete the geometry and images used to create the renders
     #cleanup_360_cameras() # TODO: re-enable after testing
 
-def render_360_for_camera(c, g):
+def render_360_for_camera(c, g, save_dir):
     bpy.ops.mesh.primitive_cube_add()
     o = bpy.context.active_object
+    o.scale = ((0.01, 0.01, 0.01)) # Needed to be scaled down to a reasonable size for the camera
     g.objects.link(o)
     bpy.ops.object.shade_smooth()
     o.location = c.location
@@ -281,52 +283,52 @@ def render_360_for_camera(c, g):
     m = o.data
     u = m.uv_textures.new()
 
-    x_pos = 0.0
+    # UV map for Unity cubemap (3x4 - Note that in Unity Z is up)
+    # [  ][+Y][  ]
+    # [+Z][+X][-Z]
+    # [  ][-Y][  ]
+    # [  ][-X][  ]
+
     # +X (8, 11, 9, 10)
-    m.uv_layers.active.data[8].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[11].uv = (x_pos, 1.0)
-    x_pos += 1/6;
-    m.uv_layers.active.data[9].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[10].uv = (x_pos, 1.0)
+    m.uv_layers.active.data[8].uv = (1/3, 0.5)
+    m.uv_layers.active.data[11].uv = (2/3, 0.5)
+    m.uv_layers.active.data[10].uv = (2/3, 0.75)
+    m.uv_layers.active.data[9].uv = (1/3, 0.75)
 
     # -X (0, 3, 1, 2) 
-    m.uv_layers.active.data[0].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[3].uv = (x_pos, 1.0)
-    x_pos += 1/6;
-    m.uv_layers.active.data[1].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[2].uv = (x_pos, 1.0)
+    m.uv_layers.active.data[0].uv = (2/3, 0.25)
+    m.uv_layers.active.data[3].uv = (1/3, 0.25)
+    m.uv_layers.active.data[2].uv = (1/3, 0.0)
+    m.uv_layers.active.data[1].uv = (2/3, 0.0)
 
-    # +Y (4, 7, 5, 6)
-    m.uv_layers.active.data[4].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[7].uv = (x_pos, 1.0)
-    x_pos += 1/6;
-    m.uv_layers.active.data[5].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[6].uv = (x_pos, 1.0)
+    # +Y (20, 23, 21, 22) +Z in blender
+    m.uv_layers.active.data[20].uv = (1/3, 0.75)
+    m.uv_layers.active.data[23].uv = (2/3, 0.75)
+    m.uv_layers.active.data[22].uv = (2/3, 1.0)
+    m.uv_layers.active.data[21].uv = (1/3, 1.0)
 
-    # -Y (12, 15, 13, 14)
-    m.uv_layers.active.data[12].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[15].uv = (x_pos, 1.0)
-    x_pos += 1/6;
-    m.uv_layers.active.data[13].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[14].uv = (x_pos, 1.0)
+    # -Y (16, 19, 17, 18) -Z in blender
+    m.uv_layers.active.data[16].uv = (1/3, 0.25)
+    m.uv_layers.active.data[19].uv = (2/3, 0.25)
+    m.uv_layers.active.data[18].uv = (2/3, 0.5)
+    m.uv_layers.active.data[17].uv = (1/3, 0.5)
 
-    # +Z (20, 23, 21, 22)
-    m.uv_layers.active.data[20].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[23].uv = (x_pos, 1.0)
-    x_pos += 1/6;
-    m.uv_layers.active.data[21].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[22].uv = (x_pos, 1.0)
+    # +Z (4, 7, 5, 6) +Y in blender
+    m.uv_layers.active.data[4].uv = (0, 0.5)
+    m.uv_layers.active.data[7].uv = (1/3, 0.5)
+    m.uv_layers.active.data[6].uv = (1/3, 0.75)
+    m.uv_layers.active.data[5].uv = (0, 0.75)
 
-    # -Z (16, 19, 17, 18)
-    m.uv_layers.active.data[16].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[19].uv = (x_pos, 1.0)
-    x_pos += 1/6;
-    m.uv_layers.active.data[17].uv = (x_pos, 0.0)
-    m.uv_layers.active.data[18].uv = (x_pos, 1.0)
+    # -Z (12, 15, 13, 14) -Y in blender
+    m.uv_layers.active.data[12].uv = (2/3, 0.5)
+    m.uv_layers.active.data[15].uv = (1.0, 0.5)
+    m.uv_layers.active.data[14].uv = (1.0, 0.75)
+    m.uv_layers.active.data[13].uv = (2/3, 0.75)
 
     # Create a new image (bake target)
-    img = bpy.data.images.new(name=o.name, width=4096, height=2048)
-    img.filepath_raw = '//' + o.name + '.png'
+    #img = bpy.data.images.new(name=o.name, width=3072, height=4096)
+    img = bpy.data.images.new(name=o.name, width=768, height=1024)
+    img.filepath_raw = save_dir + '//' + o.name + '.png'
 
     # Create a new material
     mat = bpy.data.materials.new(name=o.name)
