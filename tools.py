@@ -362,3 +362,24 @@ def cleanup_360_cameras():
             m.user_clear()
     # I may not need to remove them from the group because they have been deleted and the group is gone
     #bpy.ops.group.objects_remove_all(bpy.data.groups['360_cameras'])
+
+
+# Code for matterport scans
+def link_matterport_materials(hash):
+  materials = []
+
+  for m in bpy.data.materials:
+    if m.name.startswith(hash):
+        materials.append(m)
+
+  for m in materials:
+    m.use_nodes = True
+    mat = m.node_tree.nodes[0]
+    d = m.node_tree.nodes[1] #The Difuse BSDF node
+    m.node_tree.nodes.remove(d)
+    e = m.node_tree.nodes.new(type='ShaderNodeEmission')
+    e.location = (300, 0)
+    n = m.node_tree.nodes.new(type='ShaderNodeTexImage')
+    n.image = bpy.data.images[m.name]
+    m.node_tree.links.new(n.outputs[0], e.inputs[0])
+    m.node_tree.links.new(e.outputs[0], mat.inputs[0])
